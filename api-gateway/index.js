@@ -1,8 +1,8 @@
 
 const gateway = require('fast-gateway')
+const color = require('./helper/color.helper')
 
 const port = 4000
-
 const server = gateway({
     routes: [
         {
@@ -31,5 +31,6 @@ server.get('/gateway',(req,res)=>{
 })
 
 server.start(port).then(server=>{
-    console.log(`api-gateway server is running on ${port} number`)
+    color.success(`api-gateway server is running on ${port} number`) 
+   
 }) 

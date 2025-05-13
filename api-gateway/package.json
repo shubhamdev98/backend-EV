@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "@polka/send-type": "^0.5.2",
+    "cli-color": "^2.0.4",
     "fast-gateway": "^4.1.0"
   }
 }

@@ -1,15 +1,17 @@
 const db = require("../models");
 const { User: _User } = db;
+const config = require("../config");
 const { deleteImage } = require("../helper/imageUpload.helper");
 const { generateOTP } = require("../utils/generateOTP");
 const { responder } = require("../constant/response");
 const sendOtpToEmail = require("../service/emailProvider");
 const generateToken = require("../utils/generateToken");
+const { OAuth2Client } = require("google-auth-library");
 const CustomErrorHandler = require("../utils/CustomError");
 const bcrypt = require("bcryptjs");
 const URL = require("../constant/url");
 const fs = require("fs");
-const path = require("path");
+const path = require("path");  
 
 exports.signup = async (req, res, next) => {
   try {
@@ -366,3 +368,58 @@ exports.updateUser = async (req, res, next) => {
     return next(err);
   }
 };
+
+exports.googleLogin = async (req, res, next) => {
+  const client = new OAuth2Client(config.get("GOOGLE_CLIENT_ID")); // from .env
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return responder(res, 400, "ID Token is required");
+    }
+
+    // Verify token with Google
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: config.get("GOOGLE_CLIENT_ID"),
+    });
+
+    const payload = ticket.getPayload();
+
+    const { sub: google_id, email, given_name, family_name, picture } = payload;
+
+    // Check if user already exists
+    let user = await _User.findOne({ where: { google_id } });
+
+    if (!user) {
+      const emailExists = await _User.findOne({ where: { email } });
+      if (emailExists) {
+        return responder(res, 409, "Email is already registered with manual login");
+      }
+
+      // Create new user
+      user = await _User.create({
+        first_name: given_name,
+        last_name: family_name,
+        email,
+        profile_image: picture,
+        google_id,
+        is_verified: true,
+        login_type: "google",
+        password: "not_required", 
+      });
+    }
+
+    const { password, ...userData } = user.dataValues;
+
+    const token = generateToken({ id: user.id, email: user.email });
+
+    res.cookie("token", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+
+    return responder(res, 200, "Google login successful", { userData, token });
+  } catch (err) {
+    console.error("Error in Google login:", err);
+    return next(err);
+  }
+};
+

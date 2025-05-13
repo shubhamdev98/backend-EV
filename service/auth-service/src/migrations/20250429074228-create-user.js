@@ -30,6 +30,7 @@ module.exports = {
             otp_expires_at: {
                 type: Sequelize.DATE,
             },
+            
             profile_image: {
                 type: Sequelize.STRING,
             },
@@ -40,6 +41,16 @@ module.exports = {
             updatedAt: {
                 allowNull: false,
                 type: Sequelize.DATE,
+            },
+            google_id: {
+                type: Sequelize.STRING,
+                allowNull: true,
+                unique: true,
+            },
+            login_type: {
+                type: Sequelize.ENUM('manual', 'google'),
+                allowNull: false,
+                defaultValue: 'manual',
             },
         })
     },

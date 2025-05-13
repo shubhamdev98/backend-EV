@@ -8,6 +8,7 @@ const {
     logout,
     getUser,
     updateUser,
+    googleLogin
 } = require('../controllers/auth.controller')
 const { upload } = require('../helper/imageUpload.helper')
 const authMiddleware = require('../middleware/auth.middleware')
@@ -26,6 +27,7 @@ router.route('/user/:id').get(authMiddleware, getUser)
 router
     .route('/user/update/:id')
     .patch(authMiddleware, upload.single('profile_image'), updateUser)
+router.route('/google-login').post(googleLogin)
 
 router.use(errorHandler)
 
