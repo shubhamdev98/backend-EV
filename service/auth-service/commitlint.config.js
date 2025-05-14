@@ -18,6 +18,6 @@ module.exports = {
         'revert', // Reverts a previous commit
       ],
     ],
-    "subject-case":[2, "always", "sentence-case"],
-  }
-}
+    'subject-case': [2, 'always', 'sentence-case'],
+  },
+};

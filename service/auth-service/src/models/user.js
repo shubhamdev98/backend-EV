@@ -1,5 +1,5 @@
-"use strict";
-const { Model, DataTypes } = require("sequelize");
+'use strict';
+const { Model, DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
   class User extends Model {
@@ -56,14 +56,14 @@ module.exports = (sequelize) => {
         unique: true,
       },
       login_type: {
-        type: DataTypes.ENUM("manual", "google"),
+        type: DataTypes.ENUM('manual', 'google'),
         allowNull: false,
-        defaultValue: "manual",
+        defaultValue: 'manual',
       },
     },
     {
       sequelize,
-      modelName: "User",
+      modelName: 'User',
       timestamps: true,
     }
   );

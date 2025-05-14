@@ -1,1 +1,1 @@
-console.log("test mode");
+console.log('test mode');

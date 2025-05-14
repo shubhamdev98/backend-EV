@@ -1,17 +1,17 @@
-const db = require("../models");
+const db = require('../models');
 const { User: _User } = db;
-const config = require("../config");
-const { deleteImage } = require("../helper/imageUpload.helper");
-const { generateOTP } = require("../utils/generateOTP");
-const { responder } = require("../constant/response");
-const sendOtpToEmail = require("../service/emailProvider");
-const generateToken = require("../utils/generateToken");
-const { OAuth2Client } = require("google-auth-library");
-const CustomErrorHandler = require("../utils/CustomError");
-const bcrypt = require("bcryptjs");
-const URL = require("../constant/url");
-const fs = require("fs");
-const path = require("path");  
+const config = require('../config');
+const { deleteImage } = require('../helper/imageUpload.helper');
+const { generateOTP } = require('../utils/generateOTP');
+const { responder } = require('../constant/response');
+const sendOtpToEmail = require('../service/emailProvider');
+const generateToken = require('../utils/generateToken');
+const { OAuth2Client } = require('google-auth-library');
+const CustomErrorHandler = require('../utils/CustomError');
+const bcrypt = require('bcryptjs');
+const URL = require('../constant/url');
+const fs = require('fs');
+const path = require('path');
 
 exports.signup = async (req, res, next) => {
   try {
@@ -21,7 +21,7 @@ exports.signup = async (req, res, next) => {
     const profileImagePath =
       req.file && req.file.filename
         ? `/uploads/${req.file.filename}`
-        : "/uploads/user.png";
+        : '/uploads/user.png';
 
     const existingUser = await _User.findOne({ where: { email } });
 
@@ -29,7 +29,7 @@ exports.signup = async (req, res, next) => {
       if (req.file && req.file.filename) {
         deleteImage(req.file.filename);
       }
-      return next(CustomErrorHandler.alreadyExist("User already exists"));
+      return next(CustomErrorHandler.alreadyExist('User already exists'));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -51,25 +51,24 @@ exports.signup = async (req, res, next) => {
     await sendOtpToEmail(email, otp);
 
     const token = generateToken({ id: newUser.id, email: newUser.email });
-    res.cookie("token", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+    res.cookie('token', token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
 
     user.profile_image = `${URL.BASE}${user.profile_image}`;
 
     return responder(
       res,
       201,
-      "User created successfully. Check your email for OTP verification",
+      'User created successfully. Check your email for OTP verification',
       {
         user,
         token,
       }
     );
-
   } catch (err) {
     if (req.file && req.file.filename) {
       deleteImage(req.file.filename);
     }
-    console.error("Error in signup:", err);
+    console.error('Error in signup:', err);
     return next(err);
   }
 };
@@ -81,11 +80,11 @@ exports.verifyOtp = async (req, res, next) => {
     const otp = await _User.findOne({ where: { verification_otp } });
 
     if (!otp) {
-      return responder(res, 404, "Invalid otp");
+      return responder(res, 404, 'Invalid otp');
     }
 
     if (otp.otp_expires_at < new Date()) {
-      return responder(res, 400, "OTP has expired");
+      return responder(res, 400, 'OTP has expired');
     }
 
     otp.is_verified = true;
@@ -100,9 +99,9 @@ exports.verifyOtp = async (req, res, next) => {
       is_verified: otp.is_verified,
     };
 
-    return responder(res, 200, "User verified successfully", data);
+    return responder(res, 200, 'User verified successfully', data);
   } catch (err) {
-    console.error("Error in verifyOtp:", err);
+    console.error('Error in verifyOtp:', err);
     return next(err);
   }
 };
@@ -112,33 +111,33 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return responder(res, 400, "Email and password are required");
+      return responder(res, 400, 'Email and password are required');
     }
 
     const user = await _User.findOne({ where: { email } });
 
     if (!user) {
-      return responder(res, 404, "User not found");
+      return responder(res, 404, 'User not found');
     }
 
     if (!user.is_verified) {
-      return responder(res, 403, "User is not verified");
+      return responder(res, 403, 'User is not verified');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return responder(res, 401, "Invalid email and password");
+      return responder(res, 401, 'Invalid email and password');
     }
 
     const { password: _, ...userData } = user.dataValues;
 
     const token = generateToken({ id: user.id, email: user.email });
-    res.cookie("token", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+    res.cookie('token', token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
 
-    return responder(res, 200, "Login successful", { userData, token });
+    return responder(res, 200, 'Login successful', { userData, token });
   } catch (err) {
-    console.error("Error in login:", err);
+    console.error('Error in login:', err);
     return next(err);
   }
 };
@@ -148,11 +147,11 @@ exports.resendOtpOrForgotPassword = async (req, res, next) => {
     const { email, flag } = req.body;
 
     // Basic validation
-    if (!email) return responder(res, 400, "Email is required");
+    if (!email) return responder(res, 400, 'Email is required');
 
     // Fetch user
     const user = await _User.findOne({ where: { email } });
-    if (!user) return responder(res, 404, "User not found");
+    if (!user) return responder(res, 404, 'User not found');
 
     // OTP generation logic
     const generateAndSendOtp = async (message) => {
@@ -166,20 +165,20 @@ exports.resendOtpOrForgotPassword = async (req, res, next) => {
 
     // Handle different flags
     switch (flag) {
-      case "forgot_password":
-        return await generateAndSendOtp("OTP sent for password reset");
+      case 'forgot_password':
+        return await generateAndSendOtp('OTP sent for password reset');
 
-      case "resend_otp":
+      case 'resend_otp':
         if (user.is_verified) {
-          return responder(res, 400, "User is already verified");
+          return responder(res, 400, 'User is already verified');
         }
-        return await generateAndSendOtp("OTP resent successfully");
+        return await generateAndSendOtp('OTP resent successfully');
 
       default:
-        return responder(res, 400, "Invalid flag provided");
+        return responder(res, 400, 'Invalid flag provided');
     }
   } catch (err) {
-    console.error("Error in handleOtpRequest:", err);
+    console.error('Error in handleOtpRequest:', err);
     return next(err);
   }
 };
@@ -189,14 +188,14 @@ exports.resetPassword = async (req, res, next) => {
     const { verification_otp, new_password } = req.body;
 
     if (!verification_otp || !new_password) {
-      return responder(res, 400, "OTP and new password are required");
+      return responder(res, 400, 'OTP and new password are required');
     }
     const user = await _User.findOne({ where: { verification_otp } });
     if (!user) {
-      return responder(res, 404, "User not found");
+      return responder(res, 404, 'User not found');
     }
     if (user.otp_expires_at < new Date()) {
-      return responder(res, 400, "OTP has expired");
+      return responder(res, 400, 'OTP has expired');
     }
 
     const hashedPassword = await bcrypt.hash(new_password, 10);
@@ -209,24 +208,24 @@ exports.resetPassword = async (req, res, next) => {
 
     const token = generateToken({ id: user.id, email: user.email });
 
-    res.cookie("token", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+    res.cookie('token', token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
 
-    return responder(res, 200, "Password reset successfully", {
+    return responder(res, 200, 'Password reset successfully', {
       userData,
       token,
     });
   } catch (err) {
-    console.error("Error in resetPassword:", err);
+    console.error('Error in resetPassword:', err);
     return next(err);
   }
 };
 
 exports.logout = async (req, res, next) => {
   try {
-    res.clearCookie("token");
-    return responder(res, 200, "Logout successful");
+    res.clearCookie('token');
+    return responder(res, 200, 'Logout successful');
   } catch (err) {
-    console.error("Error in logout:", err);
+    console.error('Error in logout:', err);
     return next(err);
   }
 };
@@ -237,15 +236,15 @@ exports.getUser = async (req, res, next) => {
 
     const user = await _User.findOne({
       where: { id: userId },
-      attributes: ["id", "name", "email", "profile_image"],
+      attributes: ['id', 'name', 'email', 'profile_image'],
     });
 
     const imagePath = user.profile_image;
-    const split = imagePath.split("/");
+    const split = imagePath.split('/');
     const fileName = split[split.length - 1];
-    console.log("fileName", fileName);
+    console.log('fileName', fileName);
 
-    const filePath = path.join(__dirname, "..", "uploads", "Profile-Pic");
+    const filePath = path.join(__dirname, '..', 'uploads', 'Profile-Pic');
     const files = fs.readdirSync(filePath);
 
     let fileExists = false;
@@ -253,7 +252,7 @@ exports.getUser = async (req, res, next) => {
     for (const file of files) {
       if (file === fileName) {
         fileExists = true;
-        console.log("File exists");
+        console.log('File exists');
         break;
       }
     }
@@ -266,11 +265,11 @@ exports.getUser = async (req, res, next) => {
         user.profile_image = imagePath;
       }
     } else {
-      user.profile_image = "/uploads/user.png";
+      user.profile_image = '/uploads/user.png';
     }
 
     if (!user) {
-      return next(CustomErrorHandler.notFound("User not found"));
+      return next(CustomErrorHandler.notFound('User not found'));
     }
 
     const userData = user.toJSON();
@@ -279,9 +278,9 @@ exports.getUser = async (req, res, next) => {
       userData.profile_image = `${URL.BASE}${userData.profile_image}`;
     }
 
-    return responder(res, 200, "User fetched successfully", userData);
+    return responder(res, 200, 'User fetched successfully', userData);
   } catch (err) {
-    console.error("Error in getUser:", err);
+    console.error('Error in getUser:', err);
     return next(err);
   }
 };
@@ -294,14 +293,14 @@ exports.updateUser = async (req, res, next) => {
     const user = await _User.findByPk(userId);
     if (!user) {
       if (req.file && req.file.filename) deleteImage(req.file.filename);
-      return next(CustomErrorHandler.notFound("User not found"));
+      return next(CustomErrorHandler.notFound('User not found'));
     }
 
     if (!user.is_verified) {
       if (req.file && req.file.filename) deleteImage(req.file.filename);
       return next(
         CustomErrorHandler.unprocessableEntity(
-          "Please verify your account before updating profile"
+          'Please verify your account before updating profile'
         )
       );
     }
@@ -311,8 +310,8 @@ exports.updateUser = async (req, res, next) => {
 
     if (req.file && req.file.filename) {
       // Delete old image if it's not the default one
-      if (user.profile_image && !user.profile_image.includes("user.png")) {
-        const oldImage = user.profile_image.split("/").pop(); // get filename only
+      if (user.profile_image && !user.profile_image.includes('user.png')) {
+        const oldImage = user.profile_image.split('/').pop(); // get filename only
         deleteImage(oldImage); // delete old file
       }
 
@@ -326,7 +325,7 @@ exports.updateUser = async (req, res, next) => {
       if (!otp) {
         return next(
           CustomErrorHandler.unprocessableEntity(
-            "OTP is required to update password"
+            'OTP is required to update password'
           )
         );
       }
@@ -335,7 +334,7 @@ exports.updateUser = async (req, res, next) => {
         new Date(user.otp_expires_at) < new Date()
       ) {
         return next(
-          CustomErrorHandler.unprocessableEntity("Invalid or expired OTP")
+          CustomErrorHandler.unprocessableEntity('Invalid or expired OTP')
         );
       }
 
@@ -358,30 +357,29 @@ exports.updateUser = async (req, res, next) => {
     const { password: _, ...updatedUser } = user.dataValues;
     updatedUser.profile_image = `${URL.BASE}${updatedUser.profile_image}`;
 
-    return responder(res, 200, "User updated successfully", updatedUser);
-  
+    return responder(res, 200, 'User updated successfully', updatedUser);
   } catch (err) {
     if (req.file && req.file.filename) {
       deleteImage(req.file.filename);
     }
-    console.error("Error in updateUser:", err);
+    console.error('Error in updateUser:', err);
     return next(err);
   }
 };
 
 exports.googleLogin = async (req, res, next) => {
-  const client = new OAuth2Client(config.get("GOOGLE_CLIENT_ID")); // from .env
+  const client = new OAuth2Client(config.get('GOOGLE_CLIENT_ID')); // from .env
   try {
     const { idToken } = req.body;
 
     if (!idToken) {
-      return responder(res, 400, "ID Token is required");
+      return responder(res, 400, 'ID Token is required');
     }
 
     // Verify token with Google
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: config.get("GOOGLE_CLIENT_ID"),
+      audience: config.get('GOOGLE_CLIENT_ID'),
     });
 
     const payload = ticket.getPayload();
@@ -394,7 +392,11 @@ exports.googleLogin = async (req, res, next) => {
     if (!user) {
       const emailExists = await _User.findOne({ where: { email } });
       if (emailExists) {
-        return responder(res, 409, "Email is already registered with manual login");
+        return responder(
+          res,
+          409,
+          'Email is already registered with manual login'
+        );
       }
 
       // Create new user
@@ -405,8 +407,8 @@ exports.googleLogin = async (req, res, next) => {
         profile_image: picture,
         google_id,
         is_verified: true,
-        login_type: "google",
-        password: "not_required", 
+        login_type: 'google',
+        password: 'not_required',
       });
     }
 
@@ -414,12 +416,11 @@ exports.googleLogin = async (req, res, next) => {
 
     const token = generateToken({ id: user.id, email: user.email });
 
-    res.cookie("token", token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
+    res.cookie('token', token, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
 
-    return responder(res, 200, "Google login successful", { userData, token });
+    return responder(res, 200, 'Google login successful', { userData, token });
   } catch (err) {
-    console.error("Error in Google login:", err);
+    console.error('Error in Google login:', err);
     return next(err);
   }
 };
-
