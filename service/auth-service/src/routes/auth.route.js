@@ -15,6 +15,8 @@ const authMiddleware = require('../middleware/auth.middleware');
 const errorHandler = require('../middleware/errorHandler.middleware');
 const signupValidationSchema = require('../validation/auth.validation');
 
+
+
 router
   .route('/signup')
   .post(upload.single('profile_image'), signupValidationSchema, signup);
@@ -27,7 +29,9 @@ router.route('/user/:id').get(authMiddleware, getUser);
 router
   .route('/user/update/:id')
   .patch(authMiddleware, upload.single('profile_image'), updateUser);
+
 router.route('/google-login').post(googleLogin);
+
 
 router.use(errorHandler);
 
