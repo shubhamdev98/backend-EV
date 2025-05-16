@@ -3,8 +3,7 @@ const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('../docs/swagger');
+
 
 const corsOptions = {
   origin: 'http://localhost:3005', // Replace with your frontend URL
@@ -13,8 +12,7 @@ const corsOptions = {
   credentials: true,
 };
 
-// swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 
 // Middleware
 app.use(cors(corsOptions));
